@@ -132,6 +132,22 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    if (!head || list_empty(head) || list_is_singular(head))
+        return false;
+
+    element_t *cur_e = NULL, *nxt_e = NULL;
+    bool isdup = false;
+    list_for_each_entry_safe (cur_e, nxt_e, head, list) {
+        if (&nxt_e->list != head && !strcmp(cur_e->value, nxt_e->value)) {
+            list_del(&cur_e->list);
+            q_release_element(cur_e);
+            isdup = true;
+        } else if (isdup) {
+            list_del(&cur_e->list);
+            q_release_element(cur_e);
+            isdup = false;
+        }
+    }
     return true;
 }
 
@@ -139,10 +155,39 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+    struct list_head *n;
+    list_for_each (n, head) {
+        struct list_head *nxt = n->next;
+        if (nxt == head)
+            break;
+        list_del(n);
+        list_add(n, nxt);
+    }
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+    struct list_head *h, *t, *tmp;
+    // swap head & tail element from the beginning to the middle of the queue
+    for (h = head->next, t = head->prev; h != t; t = h->prev, h = tmp) {
+        if (h->next == t) {
+            // remain the last 2 elements
+            list_del(h);
+            list_add(h, t);
+            break;
+        }
+        tmp = h->next;
+        list_del(h);
+        list_add(h, t);
+        list_del(t);
+        list_add_tail(t, tmp);
+    }
+}
 
 /* Sort elements of queue in ascending order */
 void q_sort(struct list_head *head) {}
