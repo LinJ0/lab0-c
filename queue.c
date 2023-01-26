@@ -11,6 +11,7 @@
  */
 
 struct list_head *q_mid(struct list_head *head);
+void merge2list(struct list_head *head, struct list_head *new);
 
 
 /* Create an empty queue */
@@ -182,15 +183,24 @@ void q_reverse(struct list_head *head)
             break;
         }
         tmp = h->next;
-        list_del(h);
-        list_add(h, t);
-        list_del(t);
-        list_add_tail(t, tmp);
+        list_move(h, t);
+        list_move_tail(t, tmp);
     }
 }
 
 /* Sort elements of queue in ascending order */
-void q_sort(struct list_head *head) {}
+void q_sort(struct list_head *head)
+{
+    if (!head)
+        return;
+    else if (list_empty(head) || list_is_singular(head))
+        return;
+    LIST_HEAD(new);
+    list_cut_position(&new, head, q_mid(head)->prev);
+    q_sort(head);
+    q_sort(&new);
+    merge2list(head, &new);
+}
 /****************************************************************************/
 struct list_head *q_mid(struct list_head *head)
 {
@@ -200,4 +210,26 @@ struct list_head *q_mid(struct list_head *head)
         p = p->prev;
     }
     return p;
+}
+
+void merge2list(struct list_head *head, struct list_head *new)
+{
+    if (list_empty(new))
+        return;
+    else if (list_empty(head))
+        list_splice(new, head);
+
+    struct list_head *l1 = NULL, *l2 = NULL, *tmp = NULL;
+    for (l1 = head->next; l1 != head; l1 = l1->next) {
+        for (l2 = new->next; l2 != new; l2 = l2->next) {
+            if (strcmp(list_entry(l1, element_t, list)->value,
+                       list_entry(l2, element_t, list)->value) <= 0)
+                break;
+            tmp = l2->next;
+            list_move_tail(l2, l1);
+            l2 = tmp->prev;
+        }
+    }
+    if (!list_empty(new))
+        list_splice_tail(new, head);
 }
