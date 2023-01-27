@@ -807,8 +807,54 @@ static bool do_show(int argc, char *argv[])
     return show_queue(0);
 }
 
+bool do_hello(int argc, char *argv[])
+{
+    return (bool) printf("Hello, World\n");
+}
+
+/* Implement by Fisher-Yates algorithm */
+static void q_shuffle(struct list_head *head)
+{
+    size_t len = q_size(head);
+    if (len < 2)
+        return;
+    struct list_head *n1 = head->prev, *n2 = head->next, *n3 = head;
+    for (; --len; n2 = head->next, n3 = n3->prev, n1 = n3->prev) {
+        uint32_t randint = rand() % len;
+        for (; randint; randint--)
+            n2 = n2->next;
+
+        list_move_tail(n1, n2);
+        list_move_tail(n2, n3);
+    }
+}
+
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!l_meta.l)
+        report(3, "Warning: Try to access null queue");
+    error_check();
+
+    set_noallocate_mode(true);
+    if (exception_setup(true))
+        q_shuffle(l_meta.l);
+    exception_cancel();
+
+    set_noallocate_mode(false);
+
+    show_queue(3);
+    return !error_check();
+}
+
 static void console_init()
 {
+    ADD_COMMAND(hello, "                | Print hello message");
+    ADD_COMMAND(shuffle, "                | Shuffle the queue");
     ADD_COMMAND(new, "                | Create new queue");
     ADD_COMMAND(free, "                | Delete queue");
     ADD_COMMAND(
